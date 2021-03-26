@@ -81,11 +81,14 @@ app.get("/file_streaming", (req, res) => {
 });
 
 app.get("/produce", async (req, res) => {
-  producer();
+  await producer();
   const cons = await consumer();
-  cons.run({
-    eachMessage: async ({topic, partition, message}) => {
-      mes.push(message);
+  await cons.run({
+    eachMessage: async ({message}): Promise<void> => {
+      return new Promise(resolve => {
+        mes.push(message);
+        resolve();
+      });
     },
   });
   res.setHeader("Content-type", "application/json");
@@ -95,7 +98,7 @@ app.get("/produce", async (req, res) => {
 });
 
 app.get("/consume", async (req, res) => {
-  consumer();
+  await consumer();
   res.setHeader("Content-type", "application/json");
   res.setHeader("Access-Control-Allow-Origin", "*");
 

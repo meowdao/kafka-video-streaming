@@ -1,6 +1,6 @@
-import {Kafka} from "kafkajs";
+import {Kafka, Consumer} from "kafkajs";
 
-export const consumer = async () => {
+export const consumer = async (): Promise<Consumer> => {
   const kafka = new Kafka({
     clientId: "my-app2",
     brokers: ["localhost:9092"],

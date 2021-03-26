@@ -2,7 +2,7 @@ import {Kafka} from "kafkajs";
 import fs from "fs";
 import path from "path";
 
-export const producer = async () => {
+export const producer = async (): Promise<void> => {
   const kafka = new Kafka({
     clientId: "my-app2",
     brokers: ["localhost:9092"],
@@ -14,43 +14,20 @@ export const producer = async () => {
 
   await producer.connect();
 
-  let movie_data;
-  fs.readFile(path.resolve("video.mp4"), async function (err, data) {
-    if (err) {
-      throw err;
-    }
-    movie_data = data;
+  const data = await fs.promises.readFile(path.resolve("video.mp4"));
 
-    let i;
-    let j;
-    let temparray;
-    const chunk = 1000000;
-    let index = 0;
-    for (i = 0, j = movie_data.length; i < j; i += chunk) {
-      temparray = movie_data.slice(i, i + chunk);
-      producer.send({
-        topic: "test-streaming",
-        messages: [
-          {
-            value: temparray,
+  const chunk = 1000000;
+  for (let i = 0, j = data.length; i < j; i += chunk) {
+    producer.send({
+      topic: "test-streaming",
+      messages: [
+        {
+          value: data.slice(i, i + chunk),
+          key: String(i / chunk),
+        },
+      ],
+    });
+  }
 
-            key: String(index),
-          },
-        ],
-      });
-      index++;
-    }
-
-    // await producer.send({
-    //   topic: "test-streaming",
-    //   messages: [
-    //     {
-    //       value: movie_data.slice(0, 1),
-    //       key: "user1",
-    //     },
-    //   ],
-    // });
-
-    await producer.disconnect();
-  });
+  await producer.disconnect();
 };
